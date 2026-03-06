@@ -131,9 +131,11 @@ function formatDateValue(dateValue) {
 
 function initializeDateRange() {
   const currentDate = new Date()
-  const monthStartDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-  const formattedStartDate = formatDateValue(monthStartDate)
-  const formattedEndDate = formatDateValue(currentDate)
+  const previousYear = currentDate.getFullYear() - 1
+  const previousYearStartDate = new Date(previousYear, 0, 1)
+  const previousYearEndDate = new Date(previousYear, 11, 31)
+  const formattedStartDate = formatDateValue(previousYearStartDate)
+  const formattedEndDate = formatDateValue(previousYearEndDate)
   dateRange.value = [formattedStartDate, formattedEndDate]
   dashboardQuery.startDate = formattedStartDate
   dashboardQuery.endDate = formattedEndDate

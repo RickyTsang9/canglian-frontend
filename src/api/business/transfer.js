@@ -39,6 +39,13 @@ export function auditTransfer(transferId) {
   })
 }
 
+export function printTransfer(transferId) {
+  return request({
+    url: '/business/transfer/print/' + transferId,
+    method: 'get'
+  })
+}
+
 export function delTransfer(transferId) {
   return request({
     url: '/business/transfer/' + transferId,

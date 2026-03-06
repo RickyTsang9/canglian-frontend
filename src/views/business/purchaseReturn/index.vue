@@ -1,26 +1,26 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-      <el-form-item label="入库单号" prop="inboundNo">
+      <el-form-item label="退货单号" prop="returnNo">
         <el-input
-          v-model="queryParams.inboundNo"
-          placeholder="请输入入库单号"
+          v-model="queryParams.returnNo"
+          placeholder="请输入退货单号"
           clearable
           style="width: 200px"
           @keyup.enter="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="入库类型" prop="inboundType">
+      <el-form-item label="退货类型" prop="returnType">
         <el-input
-          v-model="queryParams.inboundType"
-          placeholder="请输入入库类型"
+          v-model="queryParams.returnType"
+          placeholder="请输入退货类型"
           clearable
           style="width: 200px"
           @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="入库状态" clearable style="width: 200px">
+        <el-select v-model="queryParams.status" placeholder="退货状态" clearable style="width: 200px">
           <el-option
             v-for="dict in sys_normal_disable"
             :key="dict.value"
@@ -42,7 +42,7 @@
           plain
           icon="Plus"
           @click="handleAdd"
-          v-hasPermi="['business:inbound:add']"
+          v-hasPermi="['business:purchaseReturn:add']"
         >新增</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -52,7 +52,7 @@
           icon="Edit"
           :disabled="isSingleDisabled"
           @click="handleUpdate"
-          v-hasPermi="['business:inbound:edit']"
+          v-hasPermi="['business:purchaseReturn:edit']"
         >修改</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -62,17 +62,17 @@
           icon="Delete"
           :disabled="isMultipleDisabled"
           @click="handleDelete"
-          v-hasPermi="['business:inbound:remove']"
+          v-hasPermi="['business:purchaseReturn:remove']"
         >删除</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="inboundList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="purchaseReturnList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="入库编号" align="center" prop="inboundId" />
-      <el-table-column label="入库单号" align="center" prop="inboundNo" />
-      <el-table-column label="入库类型" align="center" prop="inboundType" />
+      <el-table-column label="退货编号" align="center" prop="purchaseReturnId" />
+      <el-table-column label="退货单号" align="center" prop="returnNo" />
+      <el-table-column label="退货类型" align="center" prop="returnType" />
       <el-table-column label="供应商编号" align="center" prop="supplierId" />
       <el-table-column label="仓库编号" align="center" prop="warehouseId" />
       <el-table-column label="总数量" align="center" prop="totalQty" />
@@ -93,12 +93,11 @@
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="240" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" width="220" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['business:inbound:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['business:inbound:remove']">删除</el-button>
-          <el-button link type="primary" icon="CircleCheck" @click="handleAudit(scope.row)" v-hasPermi="['business:inbound:audit']">审核</el-button>
-          <el-button link type="primary" icon="Printer" @click="handlePrint(scope.row)" v-hasPermi="['business:inbound:print']">打印</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['business:purchaseReturn:edit']">修改</el-button>
+          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['business:purchaseReturn:remove']">删除</el-button>
+          <el-button link type="primary" icon="CircleCheck" @click="handleAudit(scope.row)" v-hasPermi="['business:purchaseReturn:audit']">审核</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -112,16 +111,16 @@
     />
 
     <el-dialog :title="title" v-model="open" width="760px" append-to-body>
-      <el-form ref="inboundRef" :model="form" :rules="rules" label-width="90px">
+      <el-form ref="purchaseReturnRef" :model="form" :rules="rules" label-width="90px">
         <el-row>
           <el-col :span="12">
-            <el-form-item label="入库单号" prop="inboundNo">
-              <el-input v-model="form.inboundNo" placeholder="可不填，保存后自动生成" />
+            <el-form-item label="退货单号" prop="returnNo">
+              <el-input v-model="form.returnNo" placeholder="请输入退货单号" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="入库类型" prop="inboundType">
-              <el-input v-model="form.inboundType" placeholder="请输入入库类型" />
+            <el-form-item label="退货类型" prop="returnType">
+              <el-input v-model="form.returnType" placeholder="请输入退货类型" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -189,13 +188,13 @@
   </div>
 </template>
 
-<script setup name="Inbound">
-import { listInbound, addInbound, delInbound, getInbound, updateInbound, auditInbound, printInbound } from "@/api/business/inbound"
+<script setup name="PurchaseReturn">
+import { listPurchaseReturn, addPurchaseReturn, delPurchaseReturn, getPurchaseReturn, updatePurchaseReturn, auditPurchaseReturn } from "@/api/business/purchaseReturn"
 
 const { proxy } = getCurrentInstance()
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable")
 
-const inboundList = ref([])
+const purchaseReturnList = ref([])
 const open = ref(false)
 const loading = ref(true)
 const showSearch = ref(true)
@@ -210,36 +209,40 @@ const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
-    inboundNo: undefined,
-    inboundType: undefined,
+    returnNo: undefined,
+    returnType: undefined,
     status: undefined
   },
   rules: {
-    inboundType: [{ required: true, message: "入库类型不能为空", trigger: "blur" }]
+    returnNo: [{ required: true, message: "退货单号不能为空", trigger: "blur" }],
+    returnType: [{ required: true, message: "退货类型不能为空", trigger: "blur" }]
   }
 })
 
 const { queryParams, form, rules } = toRefs(data)
 
+// 查询采购退货列表
 function getList() {
   loading.value = true
-  listInbound(queryParams.value).then(response => {
-    inboundList.value = response.rows
+  listPurchaseReturn(queryParams.value).then(response => {
+    purchaseReturnList.value = response.rows
     total.value = response.total
     loading.value = false
   })
 }
 
+// 取消按钮
 function cancel() {
   open.value = false
   reset()
 }
 
+// 表单重置
 function reset() {
   form.value = {
-    inboundId: undefined,
-    inboundNo: undefined,
-    inboundType: undefined,
+    purchaseReturnId: undefined,
+    returnNo: undefined,
+    returnType: undefined,
     supplierId: undefined,
     warehouseId: undefined,
     totalQty: undefined,
@@ -249,127 +252,58 @@ function reset() {
     auditTime: undefined,
     remark: undefined
   }
-  proxy.resetForm("inboundRef")
+  proxy.resetForm("purchaseReturnRef")
 }
 
+// 搜索按钮操作
 function handleQuery() {
   queryParams.value.pageNum = 1
   getList()
 }
 
+// 重置按钮操作
 function resetQuery() {
   proxy.resetForm("queryRef")
   handleQuery()
 }
 
+// 多选框选中数据
 function handleSelectionChange(selection) {
-  selectedIds.value = selection.map(item => item.inboundId)
+  selectedIds.value = selection.map(item => item.purchaseReturnId)
   isSingleDisabled.value = selection.length !== 1
   isMultipleDisabled.value = !selection.length
 }
 
+// 新增按钮操作
 function handleAdd() {
   reset()
   open.value = true
-  title.value = "添加入库单"
+  title.value = "添加采购退货"
 }
 
-function handleUpdate(currentRow) {
+// 修改按钮操作
+function handleUpdate(row) {
   reset()
-  const inboundId = currentRow.inboundId || selectedIds.value
-  getInbound(inboundId).then(response => {
+  const purchaseReturnId = row.purchaseReturnId || selectedIds.value
+  getPurchaseReturn(purchaseReturnId).then(response => {
     form.value = response.data
     open.value = true
-    title.value = "修改入库单"
+    title.value = "修改采购退货"
   })
 }
 
-function handleAudit(row) {
-  const inboundId = row.inboundId
-  proxy.$modal.confirm("确认审核当前入库单吗？").then(function() {
-    return auditInbound(inboundId)
-  }).then(() => {
-    proxy.$modal.msgSuccess("审核成功")
-    getList()
-  }).catch(() => {})
-}
-
-function handlePrint(currentRow) {
-  printInbound(currentRow.inboundId).then(response => {
-    const printData = response.data
-    const header = printData.header || {}
-    const itemList = printData.items || []
-    let printTableRows = ""
-    itemList.forEach(item => {
-      printTableRows += `<tr>
-        <td>${item.productId ?? ""}</td>
-        <td>${item.locationId ?? ""}</td>
-        <td>${item.batchNo ?? ""}</td>
-        <td>${item.quantity ?? ""}</td>
-        <td>${item.price ?? ""}</td>
-        <td>${item.amount ?? ""}</td>
-      </tr>`
-    })
-    const printWindow = window.open("", "_blank")
-    if (!printWindow) {
-      proxy.$modal.msgError("打印窗口被拦截，请允许浏览器弹窗")
-      return
-    }
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>入库单打印</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 24px; color: #333; }
-            h2 { margin-bottom: 16px; }
-            .header-row { margin-bottom: 8px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-            th { background: #f5f7fa; }
-          </style>
-        </head>
-        <body>
-          <h2>入库单</h2>
-          <div class="header-row">入库单号：${header.inboundNo ?? ""}</div>
-          <div class="header-row">入库类型：${header.inboundType ?? ""}</div>
-          <div class="header-row">供应商编号：${header.supplierId ?? ""}</div>
-          <div class="header-row">仓库编号：${header.warehouseId ?? ""}</div>
-          <div class="header-row">总数量：${header.totalQty ?? ""}</div>
-          <div class="header-row">总金额：${header.totalAmount ?? ""}</div>
-          <table>
-            <thead>
-              <tr>
-                <th>商品编号</th>
-                <th>库位编号</th>
-                <th>批次号</th>
-                <th>数量</th>
-                <th>单价</th>
-                <th>金额</th>
-              </tr>
-            </thead>
-            <tbody>${printTableRows}</tbody>
-          </table>
-        </body>
-      </html>
-    `)
-    printWindow.document.close()
-    printWindow.focus()
-    printWindow.print()
-    printWindow.close()
-  })
-}
-
+// 提交按钮
 function submitForm() {
-  proxy.$refs["inboundRef"].validate(valid => {
+  proxy.$refs["purchaseReturnRef"].validate(valid => {
     if (valid) {
-      if (form.value.inboundId != undefined) {
-        updateInbound(form.value).then(() => {
+      if (form.value.purchaseReturnId != undefined) {
+        updatePurchaseReturn(form.value).then(() => {
           proxy.$modal.msgSuccess("修改成功")
           open.value = false
           getList()
         })
       } else {
-        addInbound(form.value).then(() => {
+        addPurchaseReturn(form.value).then(() => {
           proxy.$modal.msgSuccess("新增成功")
           open.value = false
           getList()
@@ -379,10 +313,21 @@ function submitForm() {
   })
 }
 
-function handleDelete(currentRow) {
-  const inboundIds = currentRow.inboundId || selectedIds.value
-  proxy.$modal.confirm('是否确认删除入库编号为"' + inboundIds + '"的数据项？').then(function() {
-    return delInbound(inboundIds)
+// 审核按钮操作
+function handleAudit(row) {
+  proxy.$modal.confirm('是否确认审核采购退货编号为"' + row.purchaseReturnId + '"的数据项？').then(function () {
+    return auditPurchaseReturn(row.purchaseReturnId)
+  }).then(() => {
+    getList()
+    proxy.$modal.msgSuccess("审核成功")
+  }).catch(() => {})
+}
+
+// 删除按钮操作
+function handleDelete(row) {
+  const purchaseReturnIds = row.purchaseReturnId || selectedIds.value
+  proxy.$modal.confirm('是否确认删除采购退货编号为"' + purchaseReturnIds + '"的数据项？').then(function () {
+    return delPurchaseReturn(purchaseReturnIds)
   }).then(() => {
     getList()
     proxy.$modal.msgSuccess("删除成功")

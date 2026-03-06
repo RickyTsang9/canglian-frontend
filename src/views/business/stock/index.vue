@@ -63,8 +63,10 @@
       <el-table-column label="库存编号" align="center" prop="stockId" />
       <el-table-column label="仓库编号" align="center" prop="warehouseId" />
       <el-table-column label="商品编号" align="center" prop="productId" />
-      <el-table-column label="可用数量" align="center" prop="quantity" />
+      <el-table-column label="库存数量" align="center" prop="quantity" />
+      <el-table-column label="可用数量" align="center" prop="availableQuantity" />
       <el-table-column label="锁定数量" align="center" prop="lockedQuantity" />
+      <el-table-column label="冻结数量" align="center" prop="frozenQuantity" />
       <el-table-column label="最小预警" align="center" prop="warningMinQty" />
       <el-table-column label="最大预警" align="center" prop="warningMaxQty" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
@@ -104,8 +106,8 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="可用数量" prop="quantity">
-              <el-input v-model="form.quantity" placeholder="请输入可用数量" />
+            <el-form-item label="库存数量" prop="quantity">
+              <el-input v-model="form.quantity" placeholder="请输入库存数量" />
             </el-form-item>
           </el-col>
           <el-col :span="12">

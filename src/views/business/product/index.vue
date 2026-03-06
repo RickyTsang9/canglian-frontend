@@ -73,6 +73,11 @@
       <el-table-column label="商品编号" align="center" prop="productId" />
       <el-table-column label="商品编码" align="center" prop="productCode" />
       <el-table-column label="商品名称" align="center" prop="productName" />
+      <el-table-column label="图片" align="center" prop="productImage" width="100">
+        <template #default="scope">
+          <image-preview :src="scope.row.productImage" :width="60" :height="60" />
+        </template>
+      </el-table-column>
       <el-table-column label="单位" align="center" prop="unitName" />
       <el-table-column label="成本价" align="center" prop="costPrice" />
       <el-table-column label="售价" align="center" prop="salePrice" />
@@ -146,6 +151,13 @@
               <el-input v-model="form.brandName" placeholder="请输入品牌" />
             </el-form-item>
           </el-col>
+          <el-col :span="12">
+            <el-form-item label="图片" prop="productImage">
+              <image-upload v-model="form.productImage" :limit="1" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
           <el-col :span="12">
             <el-form-item label="成本价" prop="costPrice">
               <el-input-number v-model="form.costPrice" controls-position="right" :min="0" />
@@ -244,6 +256,7 @@ function reset() {
     barCode: undefined,
     categoryName: undefined,
     brandName: undefined,
+    productImage: undefined,
     costPrice: 0,
     salePrice: 0,
     status: "0",

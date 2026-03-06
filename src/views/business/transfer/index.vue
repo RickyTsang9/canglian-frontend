@@ -82,11 +82,12 @@
           <span>{{ parseTime(scope.row.updateTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="180" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" width="240" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['business:transfer:edit']">修改</el-button>
           <el-button link type="primary" icon="CircleCheck" :disabled="scope.row.status !== '0'" @click="handleAudit(scope.row)" v-hasPermi="['business:transfer:audit']">审核</el-button>
           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['business:transfer:remove']">删除</el-button>
+          <el-button link type="primary" icon="Printer" @click="handlePrint(scope.row)" v-hasPermi="['business:transfer:print']">打印</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -104,7 +105,7 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="调拨单号" prop="transferNo">
-              <el-input v-model="form.transferNo" placeholder="请输入调拨单号" />
+              <el-input v-model="form.transferNo" placeholder="可不填，保存后自动生成" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -156,7 +157,7 @@
 </template>
 
 <script setup name="Transfer">
-import { listTransfer, addTransfer, delTransfer, getTransfer, updateTransfer, auditTransfer } from "@/api/business/transfer"
+import { listTransfer, addTransfer, delTransfer, getTransfer, updateTransfer, auditTransfer, printTransfer } from "@/api/business/transfer"
 
 const { proxy } = getCurrentInstance()
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable")
@@ -179,9 +180,7 @@ const data = reactive({
     transferNo: undefined,
     status: undefined
   },
-  rules: {
-    transferNo: [{ required: true, message: "调拨单号不能为空", trigger: "blur" }]
-  }
+  rules: {}
 })
 
 const { queryParams, form, rules } = toRefs(data)
@@ -255,6 +254,72 @@ function handleAudit(currentRow) {
     proxy.$modal.msgSuccess("审核成功")
     getList()
   }).catch(() => {})
+}
+
+function handlePrint(currentRow) {
+  printTransfer(currentRow.transferId).then(response => {
+    const printData = response.data
+    const header = printData.header || {}
+    const itemList = printData.items || []
+    let printTableRows = ""
+    itemList.forEach(item => {
+      printTableRows += `<tr>
+        <td>${item.productId ?? ""}</td>
+        <td>${item.outLocationId ?? ""}</td>
+        <td>${item.inLocationId ?? ""}</td>
+        <td>${item.batchNo ?? ""}</td>
+        <td>${item.quantity ?? ""}</td>
+        <td>${item.price ?? ""}</td>
+        <td>${item.amount ?? ""}</td>
+      </tr>`
+    })
+    const printWindow = window.open("", "_blank")
+    if (!printWindow) {
+      proxy.$modal.msgError("打印窗口被拦截，请允许浏览器弹窗")
+      return
+    }
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>调拨单打印</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; color: #333; }
+            h2 { margin-bottom: 16px; }
+            .header-row { margin-bottom: 8px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+            th { background: #f5f7fa; }
+          </style>
+        </head>
+        <body>
+          <h2>调拨单</h2>
+          <div class="header-row">调拨单号：${header.transferNo ?? ""}</div>
+          <div class="header-row">调出仓库编号：${header.outWarehouseId ?? ""}</div>
+          <div class="header-row">调入仓库编号：${header.inWarehouseId ?? ""}</div>
+          <div class="header-row">总数量：${header.totalQty ?? ""}</div>
+          <div class="header-row">总金额：${header.totalAmount ?? ""}</div>
+          <table>
+            <thead>
+              <tr>
+                <th>商品编号</th>
+                <th>调出库位</th>
+                <th>调入库位</th>
+                <th>批次号</th>
+                <th>数量</th>
+                <th>单价</th>
+                <th>金额</th>
+              </tr>
+            </thead>
+            <tbody>${printTableRows}</tbody>
+          </table>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
+    printWindow.focus()
+    printWindow.print()
+    printWindow.close()
+  })
 }
 
 function submitForm() {

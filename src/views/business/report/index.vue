@@ -162,13 +162,33 @@ const loading = reactive({
   costStructure: false
 })
 
+function formatDateValue(dateValue) {
+  const year = dateValue.getFullYear()
+  const month = String(dateValue.getMonth() + 1).padStart(2, "0")
+  const day = String(dateValue.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+function getPreviousYearDateRange() {
+  const currentDate = new Date()
+  const previousYear = currentDate.getFullYear() - 1
+  const previousYearStartDate = new Date(previousYear, 0, 1)
+  const previousYearEndDate = new Date(previousYear, 11, 31)
+  return {
+    startDate: formatDateValue(previousYearStartDate),
+    endDate: formatDateValue(previousYearEndDate)
+  }
+}
+
+const previousYearDateRange = getPreviousYearDateRange()
+
 const receivableQuery = reactive({ customerId: undefined })
 const payableQuery = reactive({ supplierId: undefined })
 const receivableReconciliationQuery = reactive({ customerId: undefined })
 const payableReconciliationQuery = reactive({ supplierId: undefined })
-const profitLossQuery = reactive({ startDate: undefined, endDate: undefined })
-const revenueExpenseQuery = reactive({ startDate: undefined, endDate: undefined })
-const costStructureQuery = reactive({ startDate: undefined, endDate: undefined })
+const profitLossQuery = reactive({ startDate: previousYearDateRange.startDate, endDate: previousYearDateRange.endDate })
+const revenueExpenseQuery = reactive({ startDate: previousYearDateRange.startDate, endDate: previousYearDateRange.endDate })
+const costStructureQuery = reactive({ startDate: previousYearDateRange.startDate, endDate: previousYearDateRange.endDate })
 
 const receivableAgingList = ref([])
 const payableAgingList = ref([])
@@ -177,6 +197,9 @@ const payableReconciliationList = ref([])
 const profitLossData = ref(null)
 const revenueExpenseData = ref(null)
 const costStructureList = ref([])
+const profitLossLoaded = ref(false)
+const revenueExpenseLoaded = ref(false)
+const costStructureLoaded = ref(false)
 const receivableAgingChartRef = ref(null)
 const payableAgingChartRef = ref(null)
 const receivableReconciliationChartRef = ref(null)
@@ -269,6 +292,7 @@ function resetPayableReconciliation() {
 function getProfitLoss() {
   profitLoss(profitLossQuery).then(response => {
     profitLossData.value = response.data
+    profitLossLoaded.value = true
     nextTick(() => {
       renderProfitLossChart()
     })
@@ -278,16 +302,16 @@ function getProfitLoss() {
 // 重置利润表查询条件
 function resetProfitLoss() {
   proxy.resetForm("profitLossRef")
-  profitLossData.value = null
-  if (profitLossChartInstance) {
-    profitLossChartInstance.clear()
-  }
+  profitLossQuery.startDate = previousYearDateRange.startDate
+  profitLossQuery.endDate = previousYearDateRange.endDate
+  getProfitLoss()
 }
 
 // 查询收支汇总数据
 function getRevenueExpense() {
   revenueExpense(revenueExpenseQuery).then(response => {
     revenueExpenseData.value = response.data
+    revenueExpenseLoaded.value = true
     nextTick(() => {
       renderRevenueExpenseChart()
     })
@@ -297,10 +321,9 @@ function getRevenueExpense() {
 // 重置收支汇总查询条件
 function resetRevenueExpense() {
   proxy.resetForm("revenueExpenseRef")
-  revenueExpenseData.value = null
-  if (revenueExpenseChartInstance) {
-    revenueExpenseChartInstance.clear()
-  }
+  revenueExpenseQuery.startDate = previousYearDateRange.startDate
+  revenueExpenseQuery.endDate = previousYearDateRange.endDate
+  getRevenueExpense()
 }
 
 // 查询成本结构数据
@@ -309,6 +332,7 @@ function getCostStructure() {
   costStructure(costStructureQuery).then(response => {
     costStructureList.value = response.data
     loading.costStructure = false
+    costStructureLoaded.value = true
     nextTick(() => {
       renderCostStructureChart()
     })
@@ -318,8 +342,22 @@ function getCostStructure() {
 // 重置成本结构查询条件
 function resetCostStructure() {
   proxy.resetForm("costStructureRef")
+  costStructureQuery.startDate = previousYearDateRange.startDate
+  costStructureQuery.endDate = previousYearDateRange.endDate
   getCostStructure()
 }
+
+watch(active, currentActiveTab => {
+  if (currentActiveTab === "profitLoss" && !profitLossLoaded.value) {
+    getProfitLoss()
+  }
+  if (currentActiveTab === "revenueExpense" && !revenueExpenseLoaded.value) {
+    getRevenueExpense()
+  }
+  if (currentActiveTab === "costStructure" && !costStructureLoaded.value) {
+    getCostStructure()
+  }
+})
 
 // 渲染利润表图表
 function renderProfitLossChart() {

@@ -42,6 +42,13 @@ export function auditInbound(inboundId) {
   })
 }
 
+export function printInbound(inboundId) {
+  return request({
+    url: '/business/inbound/print/' + inboundId,
+    method: 'get'
+  })
+}
+
 // 删除入库单
 export function delInbound(inboundId) {
   return request({
